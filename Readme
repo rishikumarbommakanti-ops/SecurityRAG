@@ -1,0 +1,30 @@
+SecurityRAG
+
+AI-powered Security Knowledge Assistant using Retrieval-Augmented Generation (RAG).
+
+Overview
+
+SecurityRAG enables security analysts to ask natural language questions and receive contextual answers from trusted cybersecurity knowledge sources.
+
+The platform retrieves relevant information from:
+
+MITRE ATT&CK
+Sigma Rules
+Security Playbooks
+Microsoft Security Documentation
+Threat Intelligence Sources
+DFIR Knowledge Base
+Features
+Natural language security queries
+Vector-based semantic search
+MITRE ATT&CK mapping
+Source citations
+Threat investigation assistance
+Incident response guidance
+Security documentation retrieval
+Example Questions
+Explain T1059.
+What does Event ID 4625 mean?
+Investigate suspicious PowerShell activity.
+Show Sigma rules for credential dumping.
+Recommend containment steps for ransomware.
