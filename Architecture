@@ -1,0 +1,13 @@
+## Architecture
+
+User Query
+    ↓
+Retriever
+    ↓
+Vector Database
+    ↓
+Relevant Security Documents
+    ↓
+LLM
+    ↓
+Security Response + Sources
