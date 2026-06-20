@@ -1,6 +1,17 @@
-SecurityRAG
+# SecurityRAG
 
 AI-powered Security Knowledge Assistant using Retrieval-Augmented Generation (RAG).
+
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![Streamlit](https://img.shields.io/badge/Streamlit-App-red)
+![RAG](https://img.shields.io/badge/AI-RAG-green)
+![Cybersecurity](https://img.shields.io/badge/Domain-Cybersecurity-orange)
+
+---
+
+## Overview
+
+SecurityRAG enables security analysts to ask natural language questions and receive contextual answers from trusted cybersecurity knowledge sources.
 
 Overview
 
