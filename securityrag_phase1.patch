@@ -1,0 +1,754 @@
+From e486cff893ba01a331a080ee5119c62b1987bad1 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 20 Jun 2026 14:12:53 +0000
+Subject: [PATCH] Add Phase 1 project skeleton for SecurityRAG
+
+Set up folder structure, requirements, config, Streamlit app skeleton,
+and placeholder modules for ingestion, embeddings, vector store, and
+retrieval pipeline.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_018veU2gPBnkbwvTokAD5YYJ
+---
+ .env.example                      |   8 ++
+ .gitignore                        |  39 +++++++++
+ Architecture                      |  13 ---
+ README.md                         | 139 ++++++++++++++++++++++++++++++
+ Readme                            |  41 ---------
+ Tech Stack                        |   8 --
+ app/__init__.py                   |   0
+ app/app.py                        |  77 +++++++++++++++++
+ app/config.py                     |  39 +++++++++
+ app/data/.gitkeep                 |   1 -
+ app/embeddings/__init__.py        |   0
+ app/embeddings/embedding_model.py |  50 +++++++++++
+ app/ingestion/__init__.py         |   0
+ app/ingestion/document_loader.py  |  36 ++++++++
+ app/prompts/security_prompt.txt   |  18 ++++
+ app/retrieval/__init__.py         |   0
+ app/retrieval/retriever.py        |  41 +++++++++
+ app/vectorstore/__init__.py       |   0
+ app/vectorstore/chroma_store.py   |  52 +++++++++++
+ data/.gitkeep                     |   0
+ docs/.gitkeep                     |   0
+ requirements.txt                  |  10 +++
+ tests/.gitkeep                    |   0
+ tests/__init__.py                 |   0
+ 24 files changed, 509 insertions(+), 63 deletions(-)
+ create mode 100644 .env.example
+ create mode 100644 .gitignore
+ delete mode 100644 Architecture
+ create mode 100644 README.md
+ delete mode 100644 Readme
+ delete mode 100644 Tech Stack
+ create mode 100644 app/__init__.py
+ create mode 100644 app/app.py
+ create mode 100644 app/config.py
+ delete mode 100644 app/data/.gitkeep
+ create mode 100644 app/embeddings/__init__.py
+ create mode 100644 app/embeddings/embedding_model.py
+ create mode 100644 app/ingestion/__init__.py
+ create mode 100644 app/ingestion/document_loader.py
+ create mode 100644 app/prompts/security_prompt.txt
+ create mode 100644 app/retrieval/__init__.py
+ create mode 100644 app/retrieval/retriever.py
+ create mode 100644 app/vectorstore/__init__.py
+ create mode 100644 app/vectorstore/chroma_store.py
+ create mode 100644 data/.gitkeep
+ create mode 100644 docs/.gitkeep
+ create mode 100644 requirements.txt
+ create mode 100644 tests/.gitkeep
+ create mode 100644 tests/__init__.py
+
+diff --git a/.env.example b/.env.example
+new file mode 100644
+index 0000000..5534199
+--- /dev/null
++++ b/.env.example
+@@ -0,0 +1,8 @@
++# Copy this file to .env and fill in your own values.
++
++OPENAI_API_KEY=your-openai-api-key-here
++LLM_MODEL_NAME=gpt-4o-mini
++LLM_TEMPERATURE=0.1
++EMBEDDING_MODEL_NAME=sentence-transformers/all-MiniLM-L6-v2
++CHROMA_COLLECTION_NAME=security_knowledge
++RETRIEVER_TOP_K=4
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..cbbd870
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,39 @@
++# Environment variables
++.env
++.env.*
++!.env.example
++
++# Python
++__pycache__/
++*.py[cod]
++*.egg-info/
++.eggs/
++.Python
++build/
++dist/
++
++# Virtual environments
++venv/
++.venv/
++env/
++
++# Vector store / data artifacts
++data/*
++!data/.gitkeep
++chroma_db/
++*.sqlite3
++
++# IDE
++.vscode/
++.idea/
++
++# OS
++.DS_Store
++
++# Logs
++*.log
++
++# Testing / coverage
++.pytest_cache/
++.coverage
++htmlcov/
+diff --git a/Architecture b/Architecture
+deleted file mode 100644
+index 8d7a12a..0000000
+--- a/Architecture
++++ /dev/null
+@@ -1,13 +0,0 @@
+-## Architecture
+-
+-User Query
+-    ↓
+-Retriever
+-    ↓
+-Vector Database
+-    ↓
+-Relevant Security Documents
+-    ↓
+-LLM
+-    ↓
+-Security Response + Sources
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..40d3b87
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,139 @@
++# SecurityRAG
++
++![Python](https://img.shields.io/badge/Python-3.11-blue)
++![Streamlit](https://img.shields.io/badge/Streamlit-App-red)
++![RAG](https://img.shields.io/badge/AI-RAG-green)
++![Cybersecurity](https://img.shields.io/badge/Domain-Cybersecurity-orange)
++
++AI-powered Security Knowledge Assistant using Retrieval-Augmented Generation (RAG).
++
++## Overview
++
++SecurityRAG enables SOC analysts, DFIR analysts, and security engineers to ask natural
++language questions and receive contextual answers — with source citations — from
++trusted cybersecurity knowledge sources:
++
++- MITRE ATT&CK
++- Sigma Rules
++- Security Documentation
++- DFIR Playbooks
++
++## Architecture
++
++```
++User Query
++    ↓
++Retriever
++    ↓
++Vector Database
++    ↓
++Security Documents
++    ↓
++LLM
++    ↓
++Answer + Source Citations
++```
++
++## Features (Planned)
++
++- Natural language security queries
++- Vector-based semantic search
++- MITRE ATT&CK mapping
++- Source citations
++- Threat investigation assistance
++- Incident response guidance
++- Security documentation retrieval
++
++## Example Questions
++
++- Explain T1059.
++- What does Event ID 4625 mean?
++- Investigate suspicious PowerShell activity.
++- Show Sigma rules for credential dumping.
++- Recommend containment steps for ransomware.
++
++## Tech Stack
++
++- Python 3.11
++- Streamlit
++- LangChain
++- ChromaDB
++- OpenAI API
++- Sentence Transformers
++
++## Project Structure
++
++```
++SecurityRAG/
++├── app/
++│   ├── app.py                       # Streamlit application entry point
++│   ├── config.py                    # Centralized configuration
++│   ├── ingestion/
++│   │   └── document_loader.py       # Document ingestion (placeholder)
++│   ├── embeddings/
++│   │   └── embedding_model.py       # Embedding generation (placeholder)
++│   ├── vectorstore/
++│   │   └── chroma_store.py          # Vector database (placeholder)
++│   ├── retrieval/
++│   │   └── retriever.py             # Retrieval pipeline (placeholder)
++│   └── prompts/
++│       └── security_prompt.txt      # LLM prompt template
++├── data/                            # Raw/processed security knowledge sources
++├── docs/                            # Project documentation
++├── tests/                           # Unit tests
++├── requirements.txt
++├── .gitignore
++└── README.md
++```
++
++## Installation
++
++### Prerequisites
++
++- Python 3.11
++- An OpenAI API key
++
++### Steps
++
++1. Clone the repository:
++
++   ```bash
++   git clone https://github.com/rishikumarbommakanti-ops/SecurityRAG.git
++   cd SecurityRAG
++   ```
++
++2. Create and activate a virtual environment:
++
++   ```bash
++   python3.11 -m venv venv
++   source venv/bin/activate  # On Windows: venv\Scripts\activate
++   ```
++
++3. Install dependencies:
++
++   ```bash
++   pip install -r requirements.txt
++   ```
++
++4. Configure environment variables:
++
++   ```bash
++   cp .env.example .env
++   # Edit .env and add your OPENAI_API_KEY
++   ```
++
++5. Run the Streamlit application:
++
++   ```bash
++   streamlit run app/app.py
++   ```
++
++## Status
++
++This repository is currently in **Phase 1**: project skeleton and boilerplate only.
++Document ingestion, embedding generation, vector storage, and retrieval logic are
++defined as interfaces (placeholders) and will be implemented in subsequent phases.
++
++## License
++
++TBD
+diff --git a/Readme b/Readme
+deleted file mode 100644
+index ed90a2b..0000000
+--- a/Readme
++++ /dev/null
+@@ -1,41 +0,0 @@
+-# SecurityRAG
+-
+-AI-powered Security Knowledge Assistant using Retrieval-Augmented Generation (RAG).
+-
+-![Python](https://img.shields.io/badge/Python-3.11-blue)
+-![Streamlit](https://img.shields.io/badge/Streamlit-App-red)
+-![RAG](https://img.shields.io/badge/AI-RAG-green)
+-![Cybersecurity](https://img.shields.io/badge/Domain-Cybersecurity-orange)
+-
+----
+-
+-## Overview
+-
+-SecurityRAG enables security analysts to ask natural language questions and receive contextual answers from trusted cybersecurity knowledge sources.
+-
+-Overview
+-
+-SecurityRAG enables security analysts to ask natural language questions and receive contextual answers from trusted cybersecurity knowledge sources.
+-
+-The platform retrieves relevant information from:
+-
+-MITRE ATT&CK
+-Sigma Rules
+-Security Playbooks
+-Microsoft Security Documentation
+-Threat Intelligence Sources
+-DFIR Knowledge Base
+-Features
+-Natural language security queries
+-Vector-based semantic search
+-MITRE ATT&CK mapping
+-Source citations
+-Threat investigation assistance
+-Incident response guidance
+-Security documentation retrieval
+-Example Questions
+-Explain T1059.
+-What does Event ID 4625 mean?
+-Investigate suspicious PowerShell activity.
+-Show Sigma rules for credential dumping.
+-Recommend containment steps for ransomware.
+diff --git a/Tech Stack b/Tech Stack
+deleted file mode 100644
+index e874fe8..0000000
+--- a/Tech Stack	
++++ /dev/null
+@@ -1,8 +0,0 @@
+-## Tech Stack
+-
+-- Python
+-- Streamlit
+-- LangChain
+-- ChromaDB
+-- OpenAI / Claude API
+-- Sentence Transformers
+diff --git a/app/__init__.py b/app/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/app/app.py b/app/app.py
+new file mode 100644
+index 0000000..8fb360d
+--- /dev/null
++++ b/app/app.py
+@@ -0,0 +1,77 @@
++"""Streamlit entry point for SecurityRAG.
++
++This is a skeleton UI for the AI-powered Security Knowledge Assistant. It
++currently provides a chat-style interface for entering questions, but the
++underlying RAG pipeline (retrieval + LLM answer generation) is not yet wired
++up — that will be implemented in a later phase.
++"""
++
++import streamlit as st
++
++from app import config
++
++st.set_page_config(
++    page_title="SecurityRAG - Security Knowledge Assistant",
++    page_icon="🛡️",
++    layout="wide",
++)
++
++
++def render_sidebar() -> None:
++    """Render the sidebar with project information and settings."""
++    with st.sidebar:
++        st.header("SecurityRAG")
++        st.caption("AI-powered Security Knowledge Assistant")
++        st.markdown(
++            "**Sources:**\n"
++            "- MITRE ATT&CK\n"
++            "- Sigma Rules\n"
++            "- Security Documentation\n"
++            "- DFIR Playbooks"
++        )
++        st.divider()
++        st.text(f"LLM model: {config.LLM_MODEL_NAME}")
++        st.text(f"Embedding model: {config.EMBEDDING_MODEL_NAME}")
++        st.text(f"Top-K retrieval: {config.RETRIEVER_TOP_K}")
++
++
++def render_chat() -> None:
++    """Render the main chat interface for asking security questions."""
++    st.title("🛡️ SecurityRAG")
++    st.write(
++        "Ask natural language security questions and get contextual answers "
++        "with source citations from trusted cybersecurity knowledge sources."
++    )
++
++    if "messages" not in st.session_state:
++        st.session_state.messages = []
++
++    for message in st.session_state.messages:
++        with st.chat_message(message["role"]):
++            st.markdown(message["content"])
++
++    user_query = st.chat_input("Ask a security question (e.g. 'Explain T1059')")
++    if user_query:
++        st.session_state.messages.append({"role": "user", "content": user_query})
++        with st.chat_message("user"):
++            st.markdown(user_query)
++
++        with st.chat_message("assistant"):
++            placeholder_response = (
++                "The retrieval and answer-generation pipeline is not yet implemented. "
++                "This is currently a Phase 1 skeleton."
++            )
++            st.markdown(placeholder_response)
++        st.session_state.messages.append(
++            {"role": "assistant", "content": placeholder_response}
++        )
++
++
++def main() -> None:
++    """Application entry point."""
++    render_sidebar()
++    render_chat()
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/app/config.py b/app/config.py
+new file mode 100644
+index 0000000..9226a7d
+--- /dev/null
++++ b/app/config.py
+@@ -0,0 +1,39 @@
++"""Central configuration for SecurityRAG.
++
++Loads environment variables and exposes project-wide settings such as
++paths, model names, and vector store options. Other modules should import
++configuration values from here instead of reading environment variables
++directly.
++"""
++
++import os
++from pathlib import Path
++
++from dotenv import load_dotenv
++
++load_dotenv()
++
++# Project paths
++BASE_DIR = Path(__file__).resolve().parent.parent
++DATA_DIR = BASE_DIR / "data"
++DOCS_DIR = BASE_DIR / "docs"
++CHROMA_PERSIST_DIR = BASE_DIR / "chroma_db"
++
++# OpenAI / LLM settings
++OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
++LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "gpt-4o-mini")
++LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.1"))
++
++# Embedding model settings
++EMBEDDING_MODEL_NAME = os.getenv(
++    "EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2"
++)
++
++# Vector store settings
++CHROMA_COLLECTION_NAME = os.getenv("CHROMA_COLLECTION_NAME", "security_knowledge")
++
++# Retrieval settings
++RETRIEVER_TOP_K = int(os.getenv("RETRIEVER_TOP_K", "4"))
++
++# Prompt template path
++SECURITY_PROMPT_PATH = BASE_DIR / "app" / "prompts" / "security_prompt.txt"
+diff --git a/app/data/.gitkeep b/app/data/.gitkeep
+deleted file mode 100644
+index 8b13789..0000000
+--- a/app/data/.gitkeep
++++ /dev/null
+@@ -1 +0,0 @@
+-
+diff --git a/app/embeddings/__init__.py b/app/embeddings/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/app/embeddings/embedding_model.py b/app/embeddings/embedding_model.py
+new file mode 100644
+index 0000000..b45c507
+--- /dev/null
++++ b/app/embeddings/embedding_model.py
+@@ -0,0 +1,50 @@
++"""Embedding generation placeholder.
++
++This module will wrap a Sentence Transformers model to convert security
++documents and user queries into vector embeddings for semantic search.
++
++Phase 1 only defines the interface; the actual embedding logic will be
++implemented in a later phase.
++"""
++
++from typing import List
++
++
++class EmbeddingModel:
++    """Generates vector embeddings for text using a Sentence Transformers model."""
++
++    def __init__(self, model_name: str) -> None:
++        """Initialize the embedding model.
++
++        Args:
++            model_name: Name or path of the Sentence Transformers model to load.
++        """
++        self.model_name = model_name
++
++    def embed_documents(self, texts: List[str]) -> List[List[float]]:
++        """Generate embeddings for a list of documents.
++
++        Args:
++            texts: List of text chunks to embed.
++
++        Returns:
++            A list of embedding vectors, one per input text.
++
++        Raises:
++            NotImplementedError: Embedding generation is not yet implemented.
++        """
++        raise NotImplementedError("Embedding generation will be implemented in a later phase.")
++
++    def embed_query(self, text: str) -> List[float]:
++        """Generate an embedding for a single query string.
++
++        Args:
++            text: The query text to embed.
++
++        Returns:
++            The embedding vector for the query.
++
++        Raises:
++            NotImplementedError: Embedding generation is not yet implemented.
++        """
++        raise NotImplementedError("Embedding generation will be implemented in a later phase.")
+diff --git a/app/ingestion/__init__.py b/app/ingestion/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/app/ingestion/document_loader.py b/app/ingestion/document_loader.py
+new file mode 100644
+index 0000000..6777ecf
+--- /dev/null
++++ b/app/ingestion/document_loader.py
+@@ -0,0 +1,36 @@
++"""Document ingestion placeholder.
++
++This module will be responsible for loading raw security knowledge sources
++(MITRE ATT&CK, Sigma rules, security documentation, DFIR playbooks) from the
++``data/`` directory and converting them into a normalized document format
++ready for embedding.
++
++Phase 1 only defines the interface; the actual loading/parsing logic will be
++implemented in a later phase.
++"""
++
++from pathlib import Path
++from typing import List
++
++
++class DocumentLoader:
++    """Loads and normalizes security documents from the data directory."""
++
++    def __init__(self, source_dir: Path) -> None:
++        """Initialize the loader with the directory containing raw documents.
++
++        Args:
++            source_dir: Path to the directory holding source documents.
++        """
++        self.source_dir = source_dir
++
++    def load_documents(self) -> List[dict]:
++        """Load all documents from the source directory.
++
++        Returns:
++            A list of document dictionaries (e.g. ``{"content": ..., "metadata": ...}``).
++
++        Raises:
++            NotImplementedError: Document loading is not yet implemented.
++        """
++        raise NotImplementedError("Document loading will be implemented in a later phase.")
+diff --git a/app/prompts/security_prompt.txt b/app/prompts/security_prompt.txt
+new file mode 100644
+index 0000000..c1dceb1
+--- /dev/null
++++ b/app/prompts/security_prompt.txt
+@@ -0,0 +1,18 @@
++You are SecurityRAG, an AI assistant for SOC analysts, DFIR analysts, and security engineers.
++
++Use only the provided context from trusted security knowledge sources (MITRE ATT&CK, Sigma rules,
++security documentation, and DFIR playbooks) to answer the question. If the context does not contain
++enough information to answer confidently, say so explicitly instead of guessing.
++
++Context:
++{context}
++
++Question:
++{question}
++
++Instructions:
++- Provide a clear, technically accurate answer.
++- Reference relevant MITRE ATT&CK technique IDs, Sigma rule names, or document titles when applicable.
++- Cite your sources at the end of the answer.
++
++Answer:
+diff --git a/app/retrieval/__init__.py b/app/retrieval/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/app/retrieval/retriever.py b/app/retrieval/retriever.py
+new file mode 100644
+index 0000000..469872e
+--- /dev/null
++++ b/app/retrieval/retriever.py
+@@ -0,0 +1,41 @@
++"""Retrieval pipeline placeholder.
++
++This module will orchestrate the retrieval flow: embedding a user query,
++searching the vector store, and returning relevant security documents with
++source citations to be passed to the LLM for answer generation.
++
++Phase 1 only defines the interface; the actual retrieval logic will be
++implemented in a later phase.
++"""
++
++from typing import List
++
++
++class SecurityRetriever:
++    """Coordinates query embedding and vector store search for the RAG pipeline."""
++
++    def __init__(self, embedding_model, vector_store, top_k: int) -> None:
++        """Initialize the retriever with its dependencies.
++
++        Args:
++            embedding_model: An embedding model instance used to embed queries.
++            vector_store: A vector store instance used to search for documents.
++            top_k: Number of top documents to retrieve per query.
++        """
++        self.embedding_model = embedding_model
++        self.vector_store = vector_store
++        self.top_k = top_k
++
++    def retrieve(self, query: str) -> List[dict]:
++        """Retrieve the most relevant security documents for a query.
++
++        Args:
++            query: The natural language question asked by the user.
++
++        Returns:
++            A list of relevant documents with content, metadata, and source citations.
++
++        Raises:
++            NotImplementedError: Retrieval is not yet implemented.
++        """
++        raise NotImplementedError("Retrieval pipeline will be implemented in a later phase.")
+diff --git a/app/vectorstore/__init__.py b/app/vectorstore/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/app/vectorstore/chroma_store.py b/app/vectorstore/chroma_store.py
+new file mode 100644
+index 0000000..73fabdf
+--- /dev/null
++++ b/app/vectorstore/chroma_store.py
+@@ -0,0 +1,52 @@
++"""Vector database placeholder.
++
++This module will manage the ChromaDB collection used to store and query
++embedded security documents.
++
++Phase 1 only defines the interface; the actual persistence and query logic
++will be implemented in a later phase.
++"""
++
++from pathlib import Path
++from typing import List
++
++
++class ChromaStore:
++    """Manages a ChromaDB collection for storing and querying document embeddings."""
++
++    def __init__(self, persist_directory: Path, collection_name: str) -> None:
++        """Initialize the vector store configuration.
++
++        Args:
++            persist_directory: Directory where ChromaDB persists its data.
++            collection_name: Name of the ChromaDB collection to use.
++        """
++        self.persist_directory = persist_directory
++        self.collection_name = collection_name
++
++    def add_documents(self, documents: List[dict], embeddings: List[List[float]]) -> None:
++        """Add documents and their embeddings to the vector store.
++
++        Args:
++            documents: List of document dictionaries with content and metadata.
++            embeddings: List of embedding vectors corresponding to the documents.
++
++        Raises:
++            NotImplementedError: Vector store writes are not yet implemented.
++        """
++        raise NotImplementedError("Vector store ingestion will be implemented in a later phase.")
++
++    def similarity_search(self, query_embedding: List[float], top_k: int) -> List[dict]:
++        """Search the vector store for documents similar to the query embedding.
++
++        Args:
++            query_embedding: Embedding vector of the user query.
++            top_k: Number of top matching documents to return.
++
++        Returns:
++            A list of the most similar documents with their metadata.
++
++        Raises:
++            NotImplementedError: Similarity search is not yet implemented.
++        """
++        raise NotImplementedError("Vector store search will be implemented in a later phase.")
+diff --git a/data/.gitkeep b/data/.gitkeep
+new file mode 100644
+index 0000000..e69de29
+diff --git a/docs/.gitkeep b/docs/.gitkeep
+new file mode 100644
+index 0000000..e69de29
+diff --git a/requirements.txt b/requirements.txt
+new file mode 100644
+index 0000000..4ce594a
+--- /dev/null
++++ b/requirements.txt
+@@ -0,0 +1,10 @@
++streamlit==1.38.0
++langchain==0.3.7
++langchain-community==0.3.7
++langchain-openai==0.2.9
++chromadb==0.5.20
++sentence-transformers==3.3.1
++openai==1.55.3
++python-dotenv==1.0.1
++pydantic==2.9.2
++tiktoken==0.8.0
+diff --git a/tests/.gitkeep b/tests/.gitkeep
+new file mode 100644
+index 0000000..e69de29
+diff --git a/tests/__init__.py b/tests/__init__.py
+new file mode 100644
+index 0000000..e69de29
+-- 
+2.43.0
+
